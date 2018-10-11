@@ -27,9 +27,13 @@ def main(num_drones):
 	drone_pos = spawn_uav(num_drones, size)
 	drone_vels = []
 	for i in range(num_drones):
-		drones.append(pygame.transform.scale(pygame.image.load("hector_quadrotor.png"),(30,20)))
+		drones.append(pygame.transform.scale(pygame.image.load("hector_quadrotor.png"),(15,10)))
 		drone_rects.append(drones[i].get_rect(center=drone_pos[i]))
-		drone_vels.append([1+i, 1+i])
+		# drone_vels.append([1+i, 1+i])
+		if (i == 0):
+			drone_vels.append([1, 1])
+		else:
+			drone_vels.append([0, 0])
 
 	while 1:
 		for event in pygame.event.get():
@@ -37,19 +41,31 @@ def main(num_drones):
 
 		screen.fill((255,255,255))
 		for i in range(num_drones):
+			# stay near main drone
 			drone_rects[i] = drone_rects[i].move(drone_vels[i])
+			if (i != 0):
+				if ( np.sqrt( abs(drone_rects[0][0] - drone_rects[i][0]) ** 2 + abs(drone_rects[0][1] - drone_rects[i][1]) ** 2 ) >= 200):
+					drone_vels[i][0] = drone_vels[0][0]
+					drone_vels[i][1] = drone_vels[0][1]
+
+			# boundry check
 			if drone_rects[i].left < 0 or drone_rects[i].right > width:
 				drone_vels[i][0] = - drone_vels[i][0]
 			if drone_rects[i].top < 0 or drone_rects[i].bottom > height:
 				drone_vels[i][1] = - drone_vels[i][1]
+
+			# avoid collisions
 			for j in range(num_drones):
 				if j != i:
-					if drone_rects[i].colliderect(drone_rects[j]):
+					#if drone_rects[i].colliderect(drone_rects[j]):	
+					if (np.sqrt(abs(drone_rects[i][0] - drone_rects[j][0]) ** 2 + abs(drone_rects[i][1] - drone_rects[j][1]) ** 2) < 20):				
+						print("Possible collision detected")
 						drone_vels[i][0] = - drone_vels[i][0]
 						drone_vels[i][1] = - drone_vels[i][1]
-						drone_vels[j][0] = - drone_vels[j][0]
-						drone_vels[j][1] = - drone_vels[j][1]
 
+			# plot lines
+			if (i != 0):
+				pygame.draw.line(screen, (0,0,0), (drone_rects[i].center), (drone_rects[0].center))
 			screen.blit(drones[i], drone_rects[i])
 		pygame.display.flip()
 		clock.tick(60)
@@ -58,4 +74,4 @@ def main(num_drones):
 ##################
 ##    SCRIPT    ##
 ##################
-main(10)
+main(7)
