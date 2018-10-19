@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import sys, pygame
 
@@ -11,13 +12,13 @@ def spawn_uav(num_drones, world_size, start_sep=50):
 	center = w, h = world_size[0]/2 , world_size[1]/2
 
 	for i in range(num_drones):
-		drone_pos[i] = (w, h + start_sep*np.floor((i+1)/2)*(-1)**(i+1))
+		drone_pos[i] = [w, h + start_sep*np.floor((i+1)/2)*(-1)**(i+1)]
 	return drone_pos
 
 
 def main(num_drones):
 	pygame.init()
-	size = width, height = 1000, 600
+	size = width, height = 1200, 600
 	screen = pygame.display.set_mode(size)
 	pygame.display.set_caption("2D Drone Simulator")
 	clock = pygame.time.Clock()
@@ -27,20 +28,33 @@ def main(num_drones):
 	drone_pos = spawn_uav(num_drones, size)
 	drone_vels = []
 	for i in range(num_drones):
-		drones.append(pygame.transform.scale(pygame.image.load("hector_quadrotor.png"),(15,10)))
+		drones.append(pygame.transform.scale(pygame.image.load("hector_quadrotor.png"),(10,4)))
 		drone_rects.append(drones[i].get_rect(center=drone_pos[i]))
 		# drone_vels.append([1+i, 1+i])
 		if (i == 0):
-			drone_vels.append([1, 1])
+			drone_vels.append([1.1, 0.0])
 		else:
-			drone_vels.append([0, 0])
+			drone_vels.append([0.0, 0.0])
 
+	x_rep = []
+	y_rep = []
+	x_atr = []
+	y_atr = []
 	while 1:
 		for event in pygame.event.get():
-			if event.type == pygame.QUIT: sys.exit()
-
+			if event.type == pygame.QUIT:
+				plt.plot(np.arange(len(x_rep)), x_rep, label="x rep")
+				plt.plot(np.arange(len(y_rep)), y_rep, label="y rep")
+				plt.plot(np.arange(len(x_atr)), x_atr, label="x atr")
+				plt.plot(np.arange(len(y_atr)), y_atr, label="y atr")
+				plt.legend()
+				plt.show()
+				sys.exit()
+		
 		screen.fill((255,255,255))
 		for i in range(num_drones):
+			'''
+			OLD NAIVE VERSION
 			# stay near main drone
 			drone_rects[i] = drone_rects[i].move(drone_vels[i])
 			if (i != 0):
@@ -62,6 +76,37 @@ def main(num_drones):
 						print("Possible collision detected")
 						drone_vels[i][0] = - drone_vels[i][0]
 						drone_vels[i][1] = - drone_vels[i][1]
+			'''
+
+			#### NEW VERSION
+			if (i != 0):
+				Q = 100000000000
+				R = 0.0000001
+				x_i = np.ones((num_drones - 1)) * drone_pos[i][0]
+				x_j = np.array([drone_pos[j][0] for j in range(num_drones) if j != i])
+				y_i = np.ones((num_drones - 1)) * drone_pos[i][1]
+				y_j = np.array([drone_pos[j][1] for j in range(num_drones) if j != i])
+				z_i = np.ones((num_drones - 1, 2)) * drone_pos[i]
+				z_j = np.array([drone_pos[j] for j in range(num_drones) if j != i])
+				norm = np.linalg.norm(z_i - z_j)**2
+
+				drone_vels[i][0] = np.clip(- Q*np.sum(x_i - x_j)/(norm**2) + 4*R*R*norm*np.sum(x_i - x_j)*np.exp(R*(norm)**2), -20, 20)
+				drone_vels[i][1] = np.clip(- Q*np.sum(y_i - y_j)/(norm**2) + 4*R*R*norm*np.sum(y_i - y_j)*np.exp(R*(norm)**2), -20, 20)
+
+			if (i == 1):
+				x_rep.append(-Q*np.sum(x_i - x_j)/(norm**2))
+				y_rep.append(-Q*np.sum(y_i - y_j)/(norm**2))
+				x_atr.append( 4*R*R*norm*np.sum(x_i - x_j)*np.exp(R*(norm)**2))
+				y_atr.append( 4*R*R*norm*np.sum(y_i - y_j)*np.exp(R*(norm)**2))
+
+
+		for i in range(num_drones):
+			# update position
+			drone_pos[i][0] += drone_vels[i][0]
+			drone_pos[i][1] += drone_vels[i][1]
+
+			drone_rects[i].x = drone_pos[i][0]
+			drone_rects[i].y = drone_pos[i][1]
 
 			# plot lines
 			if (i != 0):
@@ -74,4 +119,4 @@ def main(num_drones):
 ##################
 ##    SCRIPT    ##
 ##################
-main(7)
+main(3)
