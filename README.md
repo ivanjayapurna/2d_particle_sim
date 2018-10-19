@@ -1,7 +1,7 @@
 # 2d_particle_sim
-A 2D particle simulator created using pygame to be connected to OpenWSN or similar network simulator to test micro-robot control functions and algorithms. Run simulator_v1.py.
+A 2D particle simulator created using matplotlib animate to be connected to OpenWSN or similar network simulator to test micro-robot control functions and algorithms. Run sim_v2.py. (Note: simulator_v1.py was a pygame implementation that is now discontinued / no longer functional.)
 
 # TODO:
-0. there is a bug where keyboard inputs do not work on Mac OS python3, on Linux there should be no issue, need to test & implement this on linux later.
-1. update physics to get accurate acceleration and deceleration consistent with that of hector quadrotor (for slowdown and speedup when avoiding collisions)
-2. connect to https://bitbucket.org/6tisch/simulator to send commands to change velocity and stuff
+1. connect to https://bitbucket.org/6tisch/simulator to send commands to change velocity and stuff
+2. Fine tune coefficients and clip values (current values are tested to be stable up to at least 15 drones)
+3. Add lines between drone points (like in simulator_v1)

@@ -36,19 +36,9 @@ def main(num_drones):
 		else:
 			drone_vels.append([0.0, 0.0])
 
-	x_rep = []
-	y_rep = []
-	x_atr = []
-	y_atr = []
 	while 1:
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
-				plt.plot(np.arange(len(x_rep)), x_rep, label="x rep")
-				plt.plot(np.arange(len(y_rep)), y_rep, label="y rep")
-				plt.plot(np.arange(len(x_atr)), x_atr, label="x atr")
-				plt.plot(np.arange(len(y_atr)), y_atr, label="y atr")
-				plt.legend()
-				plt.show()
 				sys.exit()
 		
 		screen.fill((255,255,255))
@@ -88,17 +78,15 @@ def main(num_drones):
 				y_j = np.array([drone_pos[j][1] for j in range(num_drones) if j != i])
 				z_i = np.ones((num_drones - 1, 2)) * drone_pos[i]
 				z_j = np.array([drone_pos[j] for j in range(num_drones) if j != i])
-				norm = np.linalg.norm(z_i - z_j)**2
+				norm = np.linalg.norm(z_i - z_j, axis=1)**2
 
-				drone_vels[i][0] = np.clip(- Q*np.sum(x_i - x_j)/(norm**2) + 4*R*R*norm*np.sum(x_i - x_j)*np.exp(R*(norm)**2), -20, 20)
-				drone_vels[i][1] = np.clip(- Q*np.sum(y_i - y_j)/(norm**2) + 4*R*R*norm*np.sum(y_i - y_j)*np.exp(R*(norm)**2), -20, 20)
+				drone_vels[i][0] = np.clip( - np.sum( Q*np.sum((x_i - x_j)/(norm**2)) + 4*R*R*norm*np.sum((x_i - x_j)*np.exp(R*(norm)**2)) ), -20, 20)
+				drone_vels[i][1] = np.clip( - np.sum( Q*np.sum((y_i - y_j)/(norm**2)) + 4*R*R*norm*np.sum((y_i - y_j)*np.exp(R*(norm)**2)) ), -20, 20)
 
-			if (i == 1):
-				x_rep.append(-Q*np.sum(x_i - x_j)/(norm**2))
-				y_rep.append(-Q*np.sum(y_i - y_j)/(norm**2))
-				x_atr.append( 4*R*R*norm*np.sum(x_i - x_j)*np.exp(R*(norm)**2))
-				y_atr.append( 4*R*R*norm*np.sum(y_i - y_j)*np.exp(R*(norm)**2))
-
+				print("x_diff", (x_i - x_j))
+				print("y_diff", (y_i - y_j))
+				print("norm", norm)
+				print("vel drone_1", drone_vels[1])
 
 		for i in range(num_drones):
 			# update position

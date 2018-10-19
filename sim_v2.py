@@ -14,28 +14,21 @@ def animate(i):
 			y_j = np.array([drone_pos[j][1] for j in range(num_drones) if j != i])
 			z_i = np.ones((num_drones - 1, 2)) * drone_pos[i]
 			z_j = np.array([drone_pos[j] for j in range(num_drones) if j != i])
-			norm = np.linalg.norm(z_i - z_j)**2
+			norm = np.linalg.norm(z_i - z_j, axis=1)**2
 
-			# repulsion
-			R = 1
-			rep_x = R*np.sum(x_i - x_j)/(norm**2)
-			rep_y = R*np.sum(y_i - y_j)/(norm**2)
+			R = 100 # repulsion coefficient, EXPERIMENT
+			rep_x = - R*np.sum((x_i - x_j)/(norm**2))
+			rep_y = - R*np.sum((y_i - y_j)/(norm**2))
 
-			# attraction
-			A = 0.00000001
-			'''mathematically correct but not working:
-			atr_x = 4*A*A*norm*np.sum(x_i - x_j)*np.exp(A*(norm)**2)
-			atr_y = 4*A*A*norm*np.sum(y_i - y_j)*np.exp(R*(norm)**2)
-			'''
+			A = 0.0001 # attraction coefficient, EXPERIMENT
+			atr_x = 4*A*A*np.sum(norm*(x_i - x_j)*np.exp(A*(norm)))
+			atr_y = 4*A*A*np.sum(norm*(y_i - y_j)*np.exp(A*(norm)))
 
-			atr_x = 4*A*norm*np.sum(x_i - x_j)*np.exp(A*(norm)**2)
-			atr_y = 4*A*norm*np.sum(y_i - y_j)*np.exp(R*(norm)**2)
+			# clip velocities before upating are somewhat arbitrary
+			drone_vels[i][0] = - np.clip(rep_x + atr_x, -20, 20)
+			drone_vels[i][1] = - np.clip(rep_y + atr_y, -20, 20)
 
-			# clip velocities before upating
-			drone_vels[i][0] = - np.clip(rep_x + atr_x, -10, 10)
-			drone_vels[i][1] = - np.clip(rep_y + atr_y, -10, 10)
-
-			# for plotting repuslive and attractive velocity contributions on drone 1
+			# arrays for plotting repuslive and attractive velocity contributions on drone 1
 			if (i == 1):
 				rep_xs.append(rep_x)
 				atr_xs.append(atr_x)
@@ -45,7 +38,7 @@ def animate(i):
 		drone_pos[i][0] += drone_vels[i][0]
 		drone_pos[i][1] += drone_vels[i][1]
 
-	# PLOTTING.
+	# DYNAMIC PLOTTING SCRIPT
 	ax1.clear()
 	ax2.clear()
 
@@ -66,7 +59,7 @@ def animate(i):
 # each point represented by x,y tuple in dict "drone_pos"
 # first uav initialized at (0,0)
 # subsequent uav's at "start_sep" apart in +/- x direction
-def spawn_uav(num_drones, world_size, start_sep=50):
+def spawn_uav(num_drones, world_size, start_sep=5):
 	drone_pos = {}
 	center = w, h = world_size[0]/2 , world_size[1]/2
 
@@ -79,7 +72,7 @@ def spawn_uav(num_drones, world_size, start_sep=50):
 ##    SCRIPT    ##
 ##################
 
-num_drones = 5
+num_drones = 7
 size = width, height = 1000, 300
 
 #style.use('fivethirtyeight')
